@@ -15,7 +15,7 @@
 # 方案整体
 在本博客中，我们将向您暂时如何通过亚马逊云科技的GuardDuty和Systems Manager产品来自动响应GuardDuty实时检测的恶意文件。当GuardDuty检测到恶意文件（Malware）的存在时，会实时自动触发Lambda函数，进而通过Systems Manager在EC2上删除被发现的恶意文件；再删除文件之前，会对文件及其相关信息在S3和DDB中进行备份，便于在需要恢复被删文件的时候使用。
 * 该方案的整体架构图如下所示：
-<img width="422" alt="image" src="https://github.com/HanqingAWS/amazon-guardduty-waf-acl-ssm/assets/39818196/695f57ab-cc27-440a-ab67-2e27bd618772">
+<img align=center width="422" alt="image" src="https://github.com/HanqingAWS/amazon-guardduty-waf-acl-ssm/assets/39818196/695f57ab-cc27-440a-ab67-2e27bd618772">
 * 步骤说明：
 1. GuardDuty检测到恶意文件的发现结果finding。
 2. EventBridge通过rule配置GuardDuty发现结果的事件，类型是execution:EC2/MaliciousFile。
