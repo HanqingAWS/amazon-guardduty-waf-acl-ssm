@@ -14,18 +14,17 @@
 
 # 方案整体
 在本博客中，我们将向您暂时如何通过亚马逊云科技的GuardDuty和Systems Manager产品来自动响应GuardDuty实时检测的恶意文件。当GuardDuty检测到恶意文件（Malware）的存在时，会实时自动触发Lambda函数，进而通过Systems Manager在EC2上删除被发现的恶意文件；再删除文件之前，会对文件及其相关信息在S3和DDB中进行备份，便于在需要恢复被删文件的时候使用。
-
 该方案的整体架构图如下所示：
 <img width="422" alt="image" src="https://github.com/HanqingAWS/amazon-guardduty-waf-acl-ssm/assets/39818196/695f57ab-cc27-440a-ab67-2e27bd618772">
 步骤说明：
-1.GuardDuty检测到恶意文件的发现结果finding。
-2.EventBridge通过rule配置GuardDuty发现结果的事件，类型是execution:EC2/MaliciousFile。
-3.EventBridge收到类型为execution:EC2/MaliciousFile的GuardDuty发现结果，第一个Lambda函数被触发，并解析GuardDuty发现结果的内容。
-4.在第一个Lambda函数中，通过Systems Manager的run command在EC2上获取恶意文件及其属性信息；然后继续通过Systems Manager的run command命令把malware文件上传到S3进行备份。备份恶意文件及其属性信息，是为了误删除操作后手工可以进行恢复操作。
-5.在第一个Lambda函数中，再在DDB中初始创建一个新的Item，保存malware的profile信息，包括EC2实例id、文件路径、文件属性信息等，并把这个Item状态设置为“created”。
-6.步骤4中的Systems Manager的run command命令异步执行的结果，会自动在S3的SystemsManagerOutputPrefix目录中创建一个执行结果的文件；该文件的写入事件（也是EventBridge的event），会触发第二个lambda。
-7.第二个Lambda开始工作，首先从S3下载为备份malware文件所执行的run command命令的执行结果的文件；取的是步骤5的结果，如果成功，那么下一步。
-8.第二个Lambda函数，更新DDB的item为“archived“状态，代表malware文件在S3上备份成功。
-9.根据malware文件名从DDB中获取文件路径和EC2实例id；根据EC2实例id，通过Systems Manager的run command在EC2上删除恶意文件。
-10.更新DDB item为“deleted”状态，代表恶意文件在EC2上成功删除。
-11.通过SNS，发送一个邮件通知，说明EC2上发现的恶意文件，已经被成功删除。
+1. GuardDuty检测到恶意文件的发现结果finding。
+2. EventBridge通过rule配置GuardDuty发现结果的事件，类型是execution:EC2/MaliciousFile。
+3. EventBridge收到类型为execution:EC2/MaliciousFile的GuardDuty发现结果，第一个Lambda函数被触发，并解析GuardDuty发现结果的内容。
+4. 在第一个Lambda函数中，通过Systems Manager的run command在EC2上获取恶意文件及其属性信息；然后继续通过Systems Manager的run command命令把malware文件上传到S3进行备份。备份恶意文件及其属性信息，是为了误删除操作后手工可以进行恢复操作。
+5. 在第一个Lambda函数中，再在DDB中初始创建一个新的Item，保存malware的profile信息，包括EC2实例id、文件路径、文件属性信息等，并把这个Item状态设置为“created”。
+6. 步骤4中的Systems Manager的run command命令异步执行的结果，会自动在S3的SystemsManagerOutputPrefix目录中创建一个执行结果的文件；该文件的写入事件（也是EventBridge的event），会触发第二个lambda。
+7. 第二个Lambda开始工作，首先从S3下载为备份malware文件所执行的run command命令的执行结果的文件；取的是步骤5的结果，如果成功，那么下一步。
+8. 第二个Lambda函数，更新DDB的item为“archived“状态，代表malware文件在S3上备份成功。
+9. 根据malware文件名从DDB中获取文件路径和EC2实例id；根据EC2实例id，通过Systems Manager的run command在EC2上删除恶意文件。
+10. 更新DDB item为“deleted”状态，代表恶意文件在EC2上成功删除。
+11. 通过SNS，发送一个邮件通知，说明EC2上发现的恶意文件，已经被成功删除。
