@@ -17,3 +17,10 @@
 * 该方案的整体架构图如下所示：
 ![image](https://github.com/HanqingAWS/amazon-guardduty-waf-acl-ssm/blob/main/amazon-guardduty-waf-acl-ssm.jpg)
 
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+## License
+
+This library is licensed under the MIT-0 License. See the LICENSE file.
